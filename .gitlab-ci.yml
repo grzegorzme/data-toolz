@@ -1,18 +1,21 @@
 stages:
   - test
+  - build
 
 test-unit:
   stage: test
   image: registry.naspersclassifieds.com/library/docker/build-images/python:3.7
-  before_script:
-    - echo -e "machine git.naspersclassifieds.com login gitlab-ci-token password ${CI_JOB_TOKEN}" > ~/.netrc
   script:
     - make test
 
 test-style:
   stage: test
   image: registry.naspersclassifieds.com/library/docker/build-images/python:3.7
-  before_script:
-    - echo -e "machine git.naspersclassifieds.com login gitlab-ci-token password ${CI_JOB_TOKEN}" > ~/.netrc
   script:
     - make format-check
+
+build-wheel:
+  stage: build
+  image: registry.naspersclassifieds.com/library/docker/build-images/python:3.7
+  script:
+    - make build

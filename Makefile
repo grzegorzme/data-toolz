@@ -55,3 +55,12 @@ format-apply: venv
 test: venv
 ## run pytest
 	@PYTHONPATH=$(PYTHONPATH):$(PROJECT_DIR) $(VENV)/bin/pytest $(PROJECT_DIR) -v
+
+#################################################################################
+# Build                                                                         #
+#################################################################################
+
+.PHONY: build
+build: venv
+## run pytest
+	@PYTHONPATH=$(PYTHONPATH):$(PROJECT_DIR) $(PYTHON) setup.py sdist bdist_wheel
