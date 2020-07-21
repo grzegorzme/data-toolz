@@ -3,19 +3,22 @@ from uuid import uuid4
 import botocore.session
 import s3fs
 
+LOCAL = "local"
+S3 = "s3"
+
 
 class FileSystem:
-    def __init__(self, name="local", assumed_role=None, endpoint_url=None):
-        self.name = name
+    def __init__(self, type=LOCAL, assumed_role=None, endpoint_url=None):
+        self.type = type
         self.assumed_role = assumed_role
         self.endpoint_url = endpoint_url
 
-        if self.name == "local":
+        if self.type == LOCAL:
             self.fs = None
             self.open = open
             self.walk = os.walk
             self.makedirs = os.makedirs
-        elif self.name == "s3":
+        elif self.type == S3:
             session = self._get_session()
             client_kwargs = {"endpoint_url": endpoint_url} if endpoint_url else None
             self.fs = s3fs.S3FileSystem(session=session, client_kwargs=client_kwargs)
@@ -23,7 +26,7 @@ class FileSystem:
             self.walk = self.fs.walk
             self.makedirs = self.fs.makedirs
         else:
-            raise ValueError(f"Unsupported FileReader type: {name}")
+            raise ValueError(f"Unsupported FileReader type: {type}")
 
     def _get_session(self):
         session = botocore.session.get_session()
