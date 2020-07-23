@@ -63,50 +63,14 @@ class TestIO(unittest.TestCase):
 
         assert data_out == data_in
 
-    def test_list_files(self):
+    def test_s3_with_assume(self):
         from eu_jobs.io import FileSystem
 
-        files_in = [
-            (os.path.join(self.test_dir, path), file)
-            for path, file in [
-                ("files", "top"),
-                ("files/one", "level"),
-                ("files/one/two", "three"),
-            ]
-        ]
-
-        fs = FileSystem()
-        for path, file in files_in:
-            fs.makedirs(path, exist_ok=True)
-            with fs.open(os.path.join(path, file), mode="wt") as fo:
-                fo.write(file)
-
-        result = list(fs.list_files(os.path.join(self.test_dir, "files")))
-        expected = [os.path.join(path, file) for path, file in files_in]
-
-        assert sorted(result) == sorted(expected)
-
-        result = list(fs.list_files(os.path.join(self.test_dir, "files", "one")))
-        expected = [os.path.join(path, file) for path, file in files_in[1:]]
-
-        assert sorted(result) == sorted(expected)
-
-        result = list(
-            fs.list_files(os.path.join(self.test_dir, "files", "one"), recursive=False)
-        )
-        expected = [os.path.join(path, file) for path, file in files_in[1:2]]
-
-        assert sorted(result) == sorted(expected)
-
-    def test_fs_with_assume(self):
-        from eu_jobs.io import FileSystem
-
-        fs = FileSystem("s3", assumed_role="arn:some:random:long:enough:string")
+        fs = FileSystem(type="s3", assumed_role="arn:some:random:long:enough:string")
 
         file_name = os.path.join(self.bucket_name, "test.txt")
         with fs.open(file_name, mode="wt") as fo:
             fo.write("test")
 
-        result = list(fs.list_files(self.bucket_name))
-
+        result = list(fs.find(path=self.bucket_name))
         assert result == [file_name]
