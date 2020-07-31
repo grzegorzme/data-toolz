@@ -2,6 +2,7 @@ import os
 import unittest
 import shutil
 import tempfile
+import datetime
 
 import boto3
 import pytest
@@ -23,6 +24,11 @@ class TestIO(unittest.TestCase):
         os.environ["AWS_SECRET_ACCESS_KEY"] = "testing"
         os.environ["AWS_SECURITY_TOKEN"] = "testing"
         os.environ["AWS_SESSION_TOKEN"] = "testing"
+
+        self.basic_params = [
+            ("local", self.test_dir),
+            ("s3", f"s3://{self.bucket_name}"),
+        ]
 
     def tearDown(self):
         # Remove the directory after the test
@@ -66,11 +72,52 @@ class TestIO(unittest.TestCase):
     def test_s3_with_assume(self):
         from eu_jobs.io import FileSystem
 
-        fs = FileSystem(type="s3", assumed_role="arn:some:random:long:enough:string")
+        fs = FileSystem(name="s3", assumed_role="arn:some:random:long:enough:string")
 
-        file_name = os.path.join(self.bucket_name, "test.txt")
+        file_name = os.path.join(self.bucket_name, "with-assume", "test.txt")
         with fs.open(file_name, mode="wt") as fo:
             fo.write("test")
 
-        result = list(fs.find(path=self.bucket_name))
-        assert result == [file_name]
+        result = list(fs.find(path=os.path.join(self.bucket_name, "with-assume")))
+        assert [file_name] == result
+
+    def test_filesystem_basics(self):
+        from eu_jobs.io import FileSystem
+
+        for filesystem, path in self.basic_params:
+            with self.subTest(msg=filesystem):
+                fs = FileSystem(name=filesystem)
+
+                path = os.path.join(path, filesystem)
+                fs.makedirs(path=path, exist_ok=False)
+
+                path1 = os.path.join(path, "file1")
+                path2 = os.path.join(path, "file2")
+
+                with fs.open(path1, mode="wt") as fo:
+                    fo.write(f"fs: {filesystem}")
+
+                if filesystem == "s3":
+                    with pytest.raises(NotImplementedError):
+                        fs.created(path=path1)
+                else:
+                    created = fs.created(path=path1)
+                    assert isinstance(created, datetime.datetime)
+
+                if filesystem == "s3":
+                    with pytest.raises(NotImplementedError):
+                        fs.modified(path=path)
+                else:
+                    mod = fs.modified(path=path)
+                    assert isinstance(mod, datetime.datetime)
+
+                ls = fs.ls(path=path)
+                assert len(ls) == 1
+
+                fs.copy(path1=path1, path2=path2)
+                ls = fs.ls(path=path)
+                assert len(ls) == 2
+
+                fs._rm(path=path1)
+                ls = fs.ls(path=path)
+                assert len(ls) == 1

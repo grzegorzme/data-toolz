@@ -16,7 +16,6 @@ TESTS_DIR=./tests
 #################################################################################
 
 .PHONY: venv
-## create virtual environment
 venv: ./.venv/.requirements
 
 .venv:
@@ -29,7 +28,6 @@ venv: ./.venv/.requirements
 	touch $(VENV)/.requirements
 
 .PHONY: venv-clean
-## clean virtual environment
 venv-clean:
 	rm -rf $(VENV)
 
@@ -53,8 +51,11 @@ format-apply: venv
 
 .PHONY: test
 test: venv
-## run pytest
-	@PYTHONPATH=$(PYTHONPATH):$(PROJECT_DIR) $(VENV)/bin/pytest $(PROJECT_DIR) -v
+	@PYTHONPATH=$(PYTHONPATH):$(PROJECT_DIR) $(VENV)/bin/pytest $(PROJECT_DIR)
+
+.PHONY: lint
+lint: venv
+	@PYTHONPATH=$(PYTHONPATH):$(PROJECT_DIR) $(VENV)/bin/pylint --rcfile=setup.cfg $(PROJECT_DIR)/eu_jobs
 
 #################################################################################
 # Build                                                                         #
@@ -62,5 +63,4 @@ test: venv
 
 .PHONY: build
 build: venv
-## run pytest
 	@PYTHONPATH=$(PYTHONPATH):$(PROJECT_DIR) $(PYTHON) setup.py sdist bdist_wheel

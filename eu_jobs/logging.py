@@ -1,3 +1,5 @@
+"""Module allows publishing json-structured log messages"""
+
 import sys
 import datetime
 import json
@@ -10,9 +12,7 @@ ERROR = "error"
 
 
 class JsonLogger:
-    """
-    A wrapper on the logging module to produce JSON-structured logs
-    """
+    """A wrapper on the logging module to produce JSON-structured logs"""
 
     def __init__(self, name: str = None, env: str = None) -> None:
         self.name = name
@@ -22,19 +22,19 @@ class JsonLogger:
         else:
             _logger = logging.getLogger()
 
-        for h in _logger.handlers:
-            _logger.removeHandler(h)
+        for handler in _logger.handlers:
+            _logger.removeHandler(handler)
 
-        h = logging.StreamHandler(sys.stdout)
+        handler = logging.StreamHandler(sys.stdout)
         fmt = "%(message)s"
-        h.setFormatter(logging.Formatter(fmt))
-        _logger.addHandler(h)
+        handler.setFormatter(logging.Formatter(fmt))
+        _logger.addHandler(handler)
 
         _logger.setLevel(logging.INFO)
         _logger.propagate = False
         self.logger = _logger
 
-    def log(self, msg: str, level: str, extra=None) -> str:
+    def _log(self, msg: str, level: str, extra=None) -> str:
         assert level in (INFO, WARNING, DEBUG, ERROR)
         j = {
             "logger": {"application": self.name, "enviroment": self.env},
@@ -52,7 +52,7 @@ class JsonLogger:
         :param msg: main log message
         :param kwargs: any optional data to be added to the log structure
         """
-        self.logger.info(msg=self.log(msg=msg, level=INFO, extra=kwargs))
+        self.logger.info(msg=self._log(msg=msg, level=INFO, extra=kwargs))
 
     def error(self, msg, **kwargs) -> None:
         """
@@ -60,4 +60,4 @@ class JsonLogger:
         :param msg: main log message
         :param kwargs: any optional data to be added to the log structure
         """
-        self.logger.error(msg=self.log(msg=msg, level=ERROR, extra=kwargs))
+        self.logger.error(msg=self._log(msg=msg, level=ERROR, extra=kwargs))

@@ -1,21 +1,40 @@
 stages:
-  - test
   - build
+  - test
 
-test-unit:
-  stage: test
+default:
   image: registry.naspersclassifieds.com/library/docker/build-images/python:3.7
-  script:
-    - make test
-
-test-style:
-  stage: test
-  image: registry.naspersclassifieds.com/library/docker/build-images/python:3.7
-  script:
-    - make format-check
 
 build-wheel:
   stage: build
-  image: registry.naspersclassifieds.com/library/docker/build-images/python:3.7
   script:
     - make build
+
+build-venv:
+  stage: build
+  script:
+    - make venv
+  artifacts:
+    paths:
+      - .venv
+
+test-unit:
+  stage: test
+  dependencies:
+    - build-venv
+  script:
+    - make test
+
+test-lint:
+  stage: test
+  dependencies:
+    - build-venv
+  script:
+    - make lint
+
+test-style:
+  stage: test
+  dependencies:
+    - build-venv
+  script:
+    - make format-check

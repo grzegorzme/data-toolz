@@ -1,58 +1,48 @@
 import datetime
 import json
+import pytest
 
 
-class TestLogging:
+class TestLogging(object):
 
     logger_name = "test-logger"
     logger_env = "test-env"
 
-    def test_logging_info_message(self, capsys):
+    params = [
+        {
+            "logger-args": {"name": logger_name, "env": logger_env},
+            "logger-call": {"msg": "msg-info"},
+            "method": "info",
+        },
+        {
+            "logger-args": {"name": logger_name, "env": logger_env},
+            "logger-call": {"msg": "msg-error"},
+            "method": "error",
+        },
+        {
+            "logger-args": {},
+            "logger-call": {"msg": "msg-extra", "qwerty": 123},
+            "method": "info",
+        },
+    ]
+
+    @pytest.mark.parametrize("params", params)
+    def test_logger(self, capsys, params):
         import eu_jobs.logging as logging
 
-        logger = logging.JsonLogger(name=self.logger_name, env=self.logger_env)
+        logger = logging.JsonLogger(**params["logger-args"])
 
-        msg, t_start = "msg-info", datetime.datetime.utcnow().isoformat(sep=" ")
-        logger.info(msg=msg)
+        t_start = datetime.datetime.utcnow().isoformat(sep=" ")
+        getattr(logger, params["method"])(**params["logger-call"])
         t_end = datetime.datetime.utcnow().isoformat(sep=" ")
 
-        out, err = capsys.readouterr()
+        out, _ = capsys.readouterr()
         log = json.loads(out)
 
-        assert log["level"] == logging.INFO
-        assert log["message"] == msg
+        assert log["level"] == params["method"]
+        assert log["message"] == params["logger-call"]["msg"]
         assert t_start <= log["timestamp"] <= t_end
-        assert log["logger"]["application"] == self.logger_name
-
-    def test_logging_error_message(self, capsys):
-        import eu_jobs.logging as logging
-
-        logger = logging.JsonLogger(name=self.logger_name, env=self.logger_env)
-
-        msg, t_start = "msg-error", datetime.datetime.utcnow().isoformat(sep=" ")
-        logger.error(msg=msg)
-        t_end = datetime.datetime.utcnow().isoformat(sep=" ")
-
-        out, err = capsys.readouterr()
-        log = json.loads(out)
-        assert log["level"] == logging.ERROR
-        assert log["message"] == msg
-        assert t_start <= log["timestamp"] <= t_end
-        assert log["logger"]["application"] == self.logger_name
-
-    def test_logging_extended_payload(self, capsys):
-        import eu_jobs.logging as logging
-
-        logger = logging.JsonLogger()
-
-        msg, t_start = "msg-extended", datetime.datetime.utcnow().isoformat(sep=" ")
-        logger.info(msg=msg, qwerty=123)
-        t_end = datetime.datetime.utcnow().isoformat(sep=" ")
-
-        out, err = capsys.readouterr()
-        log = json.loads(out)
-        assert log["level"] == logging.INFO
-        assert log["message"] == msg
-        assert t_start <= log["timestamp"] <= t_end
-        assert log["extra"]["qwerty"] == 123
-        assert log["logger"]["application"] is None
+        assert log["logger"]["application"] == params["logger-args"].get("name")
+        for k, v in params["logger-call"].items():
+            if k != "msg":
+                assert log["extra"][k] == v

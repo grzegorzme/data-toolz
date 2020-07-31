@@ -1,3 +1,5 @@
+"""Module providing a FileSystem wrapper class"""
+
 import inspect
 from uuid import uuid4
 import botocore.session
@@ -10,15 +12,17 @@ S3 = "s3"
 
 
 class FileSystem(AbstractFileSystem):
-    def __init__(self, type=LOCAL, assumed_role=None, endpoint_url=None):
+    """Wrapper for easier initialization of various file-system classes"""
+
+    def __init__(self, name=LOCAL, assumed_role=None, endpoint_url=None):
         super().__init__()
-        self.type = type
+        self.name = name
         self.assumed_role = assumed_role
         self.endpoint_url = endpoint_url
 
-        if self.type == LOCAL:
-            self.fs = LocalFileSystem()
-        elif self.type == S3:
+        if self.name == LOCAL:
+            self.filesystem = LocalFileSystem()
+        elif self.name == S3:
             session = botocore.session.get_session()
             if self.assumed_role:
                 sts = session.create_client("sts")
@@ -31,12 +35,36 @@ class FileSystem(AbstractFileSystem):
                     token=response["Credentials"]["SessionToken"],
                 )
             client_kwargs = {"endpoint_url": endpoint_url} if endpoint_url else None
-            self.fs = s3fs.S3FileSystem(session=session, client_kwargs=client_kwargs)
+            self.filesystem = s3fs.S3FileSystem(
+                session=session, client_kwargs=client_kwargs
+            )
         else:
             raise ValueError(f"Unsupported FileReader type: {type}")
 
         for method_name, method in inspect.getmembers(
-            self.fs, predicate=inspect.ismethod
+            self.filesystem, predicate=inspect.ismethod
         ):
-            if method_name != "__init__":
+            if method_name not in (
+                "__init__",
+                "_rm",
+                "copy",
+                "created",
+                "ls",
+                "modified",
+            ):
                 setattr(self, method_name, method)
+
+    def _rm(self, path):
+        return self.filesystem.rm(path=path)
+
+    def copy(self, path1, path2, **kwargs):
+        return self.filesystem.copy(path1=path1, path2=path2, **kwargs)
+
+    def created(self, path):
+        return self.filesystem.created(path=path)
+
+    def ls(self, path, detail=True, **kwargs):
+        return self.filesystem.ls(path=path, detail=detail, **kwargs)
+
+    def modified(self, path):
+        return self.filesystem.modified(path=path)
