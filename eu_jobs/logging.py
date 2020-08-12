@@ -37,7 +37,7 @@ class JsonLogger:
     def _log(self, msg: str, level: str, extra=None) -> str:
         assert level in (INFO, WARNING, DEBUG, ERROR)
         j = {
-            "logger": {"application": self.name, "enviroment": self.env},
+            "logger": {"application": self.name, "environment": self.env},
             "level": level,
             "timestamp": datetime.datetime.utcnow().isoformat(sep=" "),
             "message": msg,

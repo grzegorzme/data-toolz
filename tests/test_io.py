@@ -114,7 +114,7 @@ class TestIO(unittest.TestCase):
                 ls = fs.ls(path=path)
                 assert len(ls) == 1
 
-                fs.copy(path1=path1, path2=path2)
+                fs.cp_file(path1=path1, path2=path2)
                 ls = fs.ls(path=path)
                 assert len(ls) == 2
 

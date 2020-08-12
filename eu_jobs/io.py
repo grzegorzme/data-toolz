@@ -47,7 +47,7 @@ class FileSystem(AbstractFileSystem):
             if method_name not in (
                 "__init__",
                 "_rm",
-                "copy",
+                "cp_file",
                 "created",
                 "ls",
                 "modified",
@@ -57,7 +57,7 @@ class FileSystem(AbstractFileSystem):
     def _rm(self, path):
         return self.filesystem.rm(path=path)
 
-    def copy(self, path1, path2, **kwargs):
+    def cp_file(self, path1, path2, **kwargs):
         return self.filesystem.copy(path1=path1, path2=path2, **kwargs)
 
     def created(self, path):
