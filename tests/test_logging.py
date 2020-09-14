@@ -28,7 +28,7 @@ class TestLogging(object):
 
     @pytest.mark.parametrize("params", params)
     def test_logger(self, capsys, params):
-        import eu_jobs.logging as logging
+        import datatools.logging as logging
 
         logger = logging.JsonLogger(**params["logger-args"])
 

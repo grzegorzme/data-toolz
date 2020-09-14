@@ -1,6 +1,6 @@
-[![pipeline status](https://git.naspersclassifieds.com/gmelniczak/eu-jobs-python/badges/master/pipeline.svg)](https://git.naspersclassifieds.com/gmelniczak/eu-jobs-python/-/commits/master)
-[![coverage report](https://git.naspersclassifieds.com/gmelniczak/eu-jobs-python/badges/master/coverage.svg)](https://git.naspersclassifieds.com/gmelniczak/eu-jobs-python/-/commits/master)
+[![pipeline status](https://git.naspersclassifieds.com/shared-services/data-science/data-tools/badges/master/pipeline.svg)](https://git.naspersclassifieds.com/shared-services/data-science/data-tools/-/commits/master)
+[![coverage report](https://git.naspersclassifieds.com/shared-services/data-science/data-tools/badges/master/coverage.svg)](https://git.naspersclassifieds.com/shared-services/data-science/data-tools/-/commits/master)
 
-EU Jobs - Python
-================
-This repository contains reusable python code for EU Jobs projects
+data-tools
+==========
+This repository contains reusable python code for OLX data projects

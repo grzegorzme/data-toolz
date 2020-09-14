@@ -3,7 +3,7 @@
 #################################################################################
 
 PROJECT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
-PROJECT_NAME := eu-jobs-python
+PROJECT_NAME := data-tools
 VENV = $(PROJECT_DIR)/.venv
 PIP = $(VENV)/bin/pip
 PYTHON ?= python3.7
@@ -55,7 +55,7 @@ test: venv
 
 .PHONY: lint
 lint: venv
-	@PYTHONPATH=$(PYTHONPATH):$(PROJECT_DIR) $(VENV)/bin/pylint --rcfile=setup.cfg $(PROJECT_DIR)/eu_jobs
+	@PYTHONPATH=$(PYTHONPATH):$(PROJECT_DIR) $(VENV)/bin/pylint --rcfile=setup.cfg $(PROJECT_DIR)/datatools
 
 #################################################################################
 # Build                                                                         #
