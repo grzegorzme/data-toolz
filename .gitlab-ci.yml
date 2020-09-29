@@ -1,6 +1,7 @@
 stages:
   - build
   - test
+  - publish
 
 default:
   image: registry.naspersclassifieds.com/library/docker/build-images/python:3.7
@@ -9,6 +10,9 @@ build-wheel:
   stage: build
   script:
     - make build
+  artifacts:
+    paths:
+      - dist
 
 build-venv:
   stage: build
@@ -38,3 +42,15 @@ test-style:
     - build-venv
   script:
     - make format-check
+
+publish-gitlab-pypi:
+  stage: publish
+  dependencies:
+    - build-wheel
+  before_script:
+    - pip install twine
+  script:
+    - TWINE_PASSWORD=${DATA_TOOLS_TOKEN} TWINE_USERNAME=data-tools-token python -m twine upload --verbose --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
+  only:
+    - master
+  when: manual
