@@ -50,7 +50,7 @@ publish-gitlab-pypi:
   before_script:
     - pip install twine
   script:
-    - TWINE_PASSWORD=${DATA_TOOLS_TOKEN} TWINE_USERNAME=data-tools-token python -m twine upload --verbose --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
+    - TWINE_PASSWORD=${DATA_TOOLZ_TOKEN} TWINE_USERNAME=data-tools-token python -m twine upload --verbose --repository-url ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/pypi dist/*
   only:
     - master
   when: manual

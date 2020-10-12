@@ -35,13 +35,13 @@ class TestIO(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def test_unsupported_fs(self):
-        from datatools.io import FileSystem
+        from datatoolz.io import FileSystem
 
         with pytest.raises(ValueError):
             FileSystem("unsupported file system")
 
     def test_write_read_local(self):
-        from datatools.io import FileSystem
+        from datatoolz.io import FileSystem
 
         data_out = "What is my purpose?"
         path = os.path.join(self.test_dir, "my-file.txt")
@@ -55,7 +55,7 @@ class TestIO(unittest.TestCase):
         assert data_out == data_in
 
     def test_write_read_s3(self):
-        from datatools.io import FileSystem
+        from datatoolz.io import FileSystem
 
         data_out = b"What is my purpose?"
 
@@ -70,7 +70,7 @@ class TestIO(unittest.TestCase):
         assert data_out == data_in
 
     def test_s3_with_assume(self):
-        from datatools.io import FileSystem
+        from datatoolz.io import FileSystem
 
         fs = FileSystem(name="s3", assumed_role="arn:some:random:long:enough:string")
 
@@ -82,7 +82,7 @@ class TestIO(unittest.TestCase):
         assert [file_name] == result
 
     def test_filesystem_basics(self):
-        from datatools.io import FileSystem
+        from datatoolz.io import FileSystem
 
         for filesystem, path in self.basic_params:
             with self.subTest(msg=filesystem):
