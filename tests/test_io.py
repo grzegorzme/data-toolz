@@ -40,35 +40,6 @@ class TestIO(unittest.TestCase):
         with pytest.raises(ValueError):
             FileSystem("unsupported file system")
 
-    def test_write_read_local(self):
-        from datatoolz.io import FileSystem
-
-        data_out = "What is my purpose?"
-        path = os.path.join(self.test_dir, "my-file.txt")
-
-        with FileSystem().open(path, mode="wt") as fo:
-            fo.write(data_out)
-
-        with FileSystem().open(path, mode="rt") as fo:
-            data_in = fo.read()
-
-        assert data_out == data_in
-
-    def test_write_read_s3(self):
-        from datatoolz.io import FileSystem
-
-        data_out = b"What is my purpose?"
-
-        path = f"s3://{self.bucket_name}/my-file.txt"
-
-        with FileSystem("s3").open(path, mode="wb") as fo:
-            fo.write(data_out)
-
-        with FileSystem("s3").open(path, mode="rb") as fo:
-            data_in = fo.read()
-
-        assert data_out == data_in
-
     def test_s3_with_assume(self):
         from datatoolz.io import FileSystem
 
@@ -94,22 +65,47 @@ class TestIO(unittest.TestCase):
                 path1 = os.path.join(path, "file1")
                 path2 = os.path.join(path, "file2")
 
+                text_out = f"fs: {filesystem}"
                 with fs.open(path1, mode="wt") as fo:
                     fo.write(f"fs: {filesystem}")
 
+                with fs.open(path1, mode="rt") as fo:
+                    text_in = fo.read()
+                assert text_in == text_out
+
+                binary_out = text_out.encode("utf-8")
+                with fs.open(path1, mode="wb") as fo:
+                    fo.write(binary_out)
+
+                with fs.open(path1, mode="rb") as fo:
+                    binary_in = fo.read()
+                assert binary_out == binary_in
+
                 if filesystem == "s3":
+                    # not implemented for s3
                     with pytest.raises(NotImplementedError):
                         fs.created(path=path1)
-                else:
+
+                    # not implemented for s3
+                    with pytest.raises(NotImplementedError):
+                        fs.modified(path=path)
+
+                    # not implemented for s3
+                    with pytest.raises(NotImplementedError):
+                        fs.sign(path=path1)
+
+                elif filesystem == "local":
                     created = fs.created(path=path1)
                     assert isinstance(created, datetime.datetime)
 
-                if filesystem == "s3":
-                    with pytest.raises(NotImplementedError):
-                        fs.modified(path=path)
-                else:
                     mod = fs.modified(path=path)
                     assert isinstance(mod, datetime.datetime)
+
+                    with pytest.raises(NotImplementedError):
+                        fs.sign(path=path1)
+
+                else:
+                    raise ValueError(f"Unknown FS: {filesystem}")
 
                 ls = fs.ls(path=path)
                 assert len(ls) == 1

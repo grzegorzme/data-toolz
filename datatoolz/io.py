@@ -51,6 +51,7 @@ class FileSystem(AbstractFileSystem):
                 "created",
                 "ls",
                 "modified",
+                "sign",
             ):
                 setattr(self, method_name, method)
 
@@ -68,3 +69,6 @@ class FileSystem(AbstractFileSystem):
 
     def modified(self, path):
         return self.filesystem.modified(path=path)
+
+    def sign(self, path, expiration=100, **kwargs):
+        return self.filesystem.sign(path=path, expiration=expiration, **kwargs)
