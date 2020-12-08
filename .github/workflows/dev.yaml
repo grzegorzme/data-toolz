@@ -1,0 +1,28 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - '*'
+      - '!master'
+
+jobs:
+  ci-cd:
+    name: 'CI/CD'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v2
+      - name: 'Setup Python'
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.7'
+          architecture: 'x64'
+      - name: 'Setup environment'
+        run: make venv
+      - name: 'Run format check'
+        run: make format-check
+      - name: 'Run unit tests'
+        run: make test
+      - name: 'Run lint'
+        run: make lint

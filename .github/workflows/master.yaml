@@ -1,0 +1,22 @@
+name: Build/Deploy
+
+on:
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  build-package:
+    name: 'Build deploy package'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v2
+      - name: 'Build package'
+        run: make build
+      - name: 'Upload artifact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: dist
+          path: dist
+          retention-days: 3
