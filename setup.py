@@ -9,7 +9,7 @@ with open("requirements.txt") as f:
 
 setuptools.setup(
     name="data-toolz",
-    version="0.1.1",
+    version="0.1.2",
     author="Grzegorz Melniczak",
     author_email="gmelniczak@olx.pl",
     description="Data helper package",
