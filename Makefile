@@ -62,5 +62,5 @@ lint: venv
 #################################################################################
 
 .PHONY: build
-build: venv
+build:
 	@PYTHONPATH=$(PYTHONPATH):$(PROJECT_DIR) $(PYTHON) setup.py sdist bdist_wheel
