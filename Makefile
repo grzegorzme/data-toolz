@@ -40,4 +40,4 @@ test:
 
 .PHONY: lint
 lint:
-	pipenv run pylint --rcfile=setup.cfg $(PROJECT_DIR)
+	pipenv run pylint --rcfile=setup.cfg $(PROJECT_DIR)/datatoolz
