@@ -9,6 +9,8 @@ from gzip import compress, decompress
 
 import pandas as pd
 
+from .filesystem import FileSystem
+
 
 class DataIO:
     """Class for data writing/reading"""

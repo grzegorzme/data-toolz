@@ -2,65 +2,42 @@
 # GLOBALS                                                                       #
 #################################################################################
 
-PROJECT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 PROJECT_NAME := data-toolz
-VENV = $(PROJECT_DIR)/.venv
-PIP = $(VENV)/bin/pip
-PYTHON ?= python3.7
-VIRTUALENV = $(PYTHON) -m venv
-SHELL=/bin/bash
-TESTS_DIR=./tests
+
+PROJECT_DIR := $(abspath $(dir $(lastword $(MAKEFILE_LIST))))
 
 #################################################################################
-# virtual environment and dependencies                                          #
+# pipenv management                                                             #
 #################################################################################
 
-.PHONY: venv
-venv: ./.venv/.requirements
+.PHONE: env-lock
+env-lock:
+	pipenv lock
 
-.venv:
-	$(VIRTUALENV) $(VENV)
-	$(PIP) install -U pip setuptools wheel
+.PHONY: env-dev
+env-dev:
+	PIPENV_VENV_IN_PROJECT=1 pipenv install --dev
 
-.venv/.requirements: .venv
-	$(PIP) install -r $(PROJECT_DIR)/requirements.txt
-	$(PIP) install -r $(PROJECT_DIR)/requirements-dev.txt
-	touch $(VENV)/.requirements
-
-.PHONY: venv-clean
-venv-clean:
-	rm -rf $(VENV)
+.PHONY: env-rm
+env-rm:
+	pipenv --rm
 
 #################################################################################
-# code format / code style                                                      #
+# code test / lint                                                              #
 #################################################################################
 
 .PHONY: format-check
-## check compliance with code style (via 'black')
-format-check: .venv/.requirements
-	$(VENV)/bin/black --check $(PROJECT_DIR)/ $(TESTS_DIR)/
+format-check:
+	pipenv run black --check $(PROJECT_DIR)
 
 .PHONY: format-apply
-## reformat code for compliance with code style (via 'black')
-format-apply: venv
-	$(VENV)/bin/black $(PROJECT_DIR)/ $(TESTS_DIR)/
-
-#################################################################################
-# Tests                                                                         #
-#################################################################################
+format-apply:
+	pipenv run black $(PROJECT_DIR)
 
 .PHONY: test
-test: venv
-	@PYTHONPATH=$(PYTHONPATH):$(PROJECT_DIR) $(VENV)/bin/pytest $(PROJECT_DIR)
+test:
+	pipenv run pytest $(PROJECT_DIR)
 
 .PHONY: lint
-lint: venv
-	@PYTHONPATH=$(PYTHONPATH):$(PROJECT_DIR) $(VENV)/bin/pylint --rcfile=setup.cfg $(PROJECT_DIR)/datatoolz
-
-#################################################################################
-# Build                                                                         #
-#################################################################################
-
-.PHONY: build
-build:
-	@PYTHONPATH=$(PYTHONPATH):$(PROJECT_DIR) $(PYTHON) setup.py sdist bdist_wheel
+lint:
+	pipenv run pylint --rcfile=setup.cfg $(PROJECT_DIR)

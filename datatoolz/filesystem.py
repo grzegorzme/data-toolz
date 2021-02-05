@@ -8,6 +8,7 @@ import s3fs
 from fsspec import AbstractFileSystem
 from fsspec.implementations.local import LocalFileSystem
 
+
 class FileSystem(AbstractFileSystem):
     """Wrapper for easier initialization of various file-system classes"""
 
