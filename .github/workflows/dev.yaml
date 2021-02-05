@@ -19,7 +19,9 @@ jobs:
           python-version: '3.7'
           architecture: 'x64'
       - name: 'Setup environment'
-        run: make env-dev
+        run: |
+          pip install pipenv
+          make env-dev
       - name: 'Run format check'
         run: make format-check
       - name: 'Run unit tests'
