@@ -1,11 +1,9 @@
 import setuptools
-from pkg_resources import parse_requirements
 
 with open("README.md", "r") as f:
     long_description = f.read()
 
-with open("requirements.txt") as f:
-    install_requires = [str(requirement) for requirement in parse_requirements(f)]
+requirements = ["s3fs==0.4.2", "pandas", "pyarrow"]
 
 setuptools.setup(
     name="data-toolz",
@@ -19,5 +17,5 @@ setuptools.setup(
     packages=setuptools.find_packages(exclude=["tests"]),
     classifiers=["Programming Language :: Python :: 3"],
     python_requires=">=3.7",
-    install_requires=install_requires,
+    install_requires=requirements,
 )

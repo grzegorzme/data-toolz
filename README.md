@@ -12,14 +12,14 @@ pip install data-toolz
 usage
 =====
 
-`datatoolz.io.FileSystem` class gives you an abstraction for accesing both local and remote object using the well know pythonic `open()` interface.
+`datatoolz.filesystem.FileSystem` class gives you an abstraction for accesing both local and remote object using the well know pythonic `open()` interface.
 
 ```python
-from datatoolz.io import FileSystem
+from datatoolz.filesystem import FileSystem
 
 for fs_type in ("local", "s3"):
     fs = FileSystem(name=fs_type)
-    
+
     # common pythonic interface for both local and remote file systems
     with fs.open("my-folder-or-bucket/my-file", mode="wt") as fo:
         fo.write("Hello World!")

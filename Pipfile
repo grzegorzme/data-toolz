@@ -1,0 +1,20 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+s3fs = "==0.4.2"
+pandas = "*"
+pyarrow = "*"
+
+[dev-packages]
+black = "*"
+pytest = "*"
+pytest-cov = "*"
+mock = "==4.0.2"
+moto = "*"
+pylint = "*"
+
+[requires]
+python_version = "3.7"
