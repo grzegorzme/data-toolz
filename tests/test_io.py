@@ -33,29 +33,65 @@ class TestDataIO(unittest.TestCase):
             {
                 "filesystem": "local",
                 "path": self.test_dir,
-                "filetype": "tsv",
+                "filetype": "dsv",
                 "gzip": False,
+                "sep": "|",
                 "header": True,
             },
             {
                 "filesystem": "local",
                 "path": self.test_dir,
-                "filetype": "tsv",
+                "filetype": "dsv",
                 "gzip": False,
+                "sep": "|",
                 "header": False,
             },
             {
                 "filesystem": "local",
                 "path": self.test_dir,
-                "filetype": "tsv",
+                "filetype": "dsv",
                 "gzip": True,
+                "sep": "|",
                 "header": True,
             },
             {
                 "filesystem": "local",
                 "path": self.test_dir,
-                "filetype": "tsv",
+                "filetype": "dsv",
                 "gzip": True,
+                "sep": "|",
+                "header": False,
+            },
+            {
+                "filesystem": "local",
+                "path": self.test_dir,
+                "filetype": "dsv",
+                "gzip": False,
+                "sep": "|",
+                "header": True,
+            },
+            {
+                "filesystem": "local",
+                "path": self.test_dir,
+                "filetype": "dsv",
+                "gzip": False,
+                "sep": "|",
+                "header": False,
+            },
+            {
+                "filesystem": "local",
+                "path": self.test_dir,
+                "filetype": "dsv",
+                "gzip": True,
+                "sep": "|",
+                "header": True,
+            },
+            {
+                "filesystem": "local",
+                "path": self.test_dir,
+                "filetype": "dsv",
+                "gzip": True,
+                "sep": "|",
                 "header": False,
             },
             {
@@ -74,29 +110,33 @@ class TestDataIO(unittest.TestCase):
             {
                 "filesystem": "s3",
                 "path": self.bucket_name,
-                "filetype": "tsv",
+                "filetype": "dsv",
                 "gzip": False,
+                "sep": "|",
                 "header": True,
             },
             {
                 "filesystem": "s3",
                 "path": self.bucket_name,
-                "filetype": "tsv",
+                "filetype": "dsv",
                 "gzip": False,
+                "sep": "|",
                 "header": False,
             },
             {
                 "filesystem": "s3",
                 "path": self.bucket_name,
-                "filetype": "tsv",
+                "filetype": "dsv",
                 "gzip": True,
+                "sep": "|",
                 "header": True,
             },
             {
                 "filesystem": "s3",
                 "path": self.bucket_name,
-                "filetype": "tsv",
+                "filetype": "dsv",
                 "gzip": True,
+                "sep": "|",
                 "header": False,
             },
             {
@@ -139,6 +179,7 @@ class TestDataIO(unittest.TestCase):
                 path=path,
                 filetype=params["filetype"],
                 gzip=params.get("gzip"),
+                sep=params.get("sep"),
                 header=params.get("header"),
             )
 
@@ -146,10 +187,10 @@ class TestDataIO(unittest.TestCase):
                 path=path,
                 filetype=params["filetype"],
                 gzip=params.get("gzip"),
+                sep=params.get("sep"),
                 header=params.get("header"),
             )
 
-            print(params)
             assert self.sample_df.shape == df.shape
 
     def test_unsupported_filetype(self):
@@ -266,3 +307,25 @@ class TestDataIO(unittest.TestCase):
                 values=[1, None],
                 suffix="suffix",
             )
+
+    def test_tsv_deprecation(self):
+        from datatoolz.io import DataIO
+
+        dio = DataIO()
+
+        path = os.path.join(
+            self.test_dir,
+            "tsv-deprecate",
+            "my-file.tsv",
+        )
+
+        with pytest.warns(DeprecationWarning):
+            dio.write(dataframe=self.sample_df, path=path, filetype="tsv")
+
+        with pytest.warns(DeprecationWarning):
+            df = dio.read(
+                path=path,
+                filetype="tsv",
+            )
+
+        assert self.sample_df.shape == df.shape

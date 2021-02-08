@@ -3,6 +3,7 @@
 import os
 import io
 import time
+import warnings
 from uuid import uuid4
 from concurrent.futures import ThreadPoolExecutor
 from gzip import compress, decompress
@@ -82,41 +83,40 @@ class DataIO:
                     partition = partition.drop(partition_by, axis=1)
                 yield partition_path, partition
 
-    def read(self, path, filetype="parquet", gzip=False, header=None):
+    def read(self, path, filetype="parquet", gzip=False, sep="\t", header=None):
         """
         Function for reading (partitioned) data sets from a given path
         :param path: path-like
-        :param filetype: input format type: parquet|tsv|jsonlines
-        :param gzip: is the input compressed, only used for tsv|jsonlines
+        :param filetype: input format type: parquet|dsv|jsonlines
+        :param gzip: is the input compressed, only used for dsv|jsonlines
+        :param sep: separator used for dsv (delimiter-separated values) files
         :param header: bool - True if input files has headers
         :return: pandas.DataFrame
         """
+
+        warn_tsv_deprecation(filetype=filetype)
 
         def _deserialize(data, filetype, gzip, header):
             if gzip:
                 data = decompress(data)
 
-            if filetype == "tsv":
-                data = pd.read_csv(
-                    io.StringIO(data.decode(encoding="utf-8")),
-                    sep="\t",
-                    header=0 if header is True else None,
-                    dtype=str,
-                    keep_default_na=False,
-                )
+            if filetype in ["dsv", "tsv"]:
+                reader = pd.read_csv
+                params = {
+                    "sep": sep,
+                    "header": 0 if header is True else None,
+                    "dtype": str,
+                    "keep_default_na": False,
+                }
+
             elif filetype == "jsonlines":
-                data = pd.read_json(
-                    io.StringIO(data.decode(encoding="utf-8")),
-                    orient="records",
-                    lines=True,
-                    dtype=False,
-                )
+                reader = pd.read_json
+                params = {"orient": "records", "lines": True, "dtype": False}
             else:
                 raise ValueError(f"Unsupported output format: {filetype}")
-            return data
+            return reader(io.StringIO(data.decode(encoding="utf-8")), **params)
 
         def _read(path, filetype, gzip, header):
-
             if filetype == "parquet":
                 data = pd.read_parquet(path=path, filesystem=self.filesystem)
             else:
@@ -152,6 +152,7 @@ class DataIO:
         path,
         filetype="parquet",
         gzip=False,
+        sep="\t",
         header=False,
         partition_by=None,
         suffix=None,
@@ -161,17 +162,25 @@ class DataIO:
         Saves data in a given format
         :param dataframe: input pandas.DataFrame
         :param path: path-like
-        :param filetype: output format: parquet|tsv|jsonlines
-        :param gzip: should the output be gzipped: tsv|jsonlines
-        :param header: should the columns names be included: tsv-only
+        :param filetype: output format: parquet|dsv|jsonlines
+        :param gzip: should the output be gzipped: dsv|jsonlines
+        :param sep: separator used for dsv (delimiter-separated values) files
+        :param header: should the columns names be included: dsv-only
         :param partition_by: optional, list of columns to partition the output
         :param suffix: optional, suffix to use for output partitions
         :param drop_partitions: optional, bool - if to drop partition fields from output
         """
 
+        warn_tsv_deprecation(filetype=filetype)
+
         def _serialize(dataframe, filetype, gzip, header):
-            if filetype == "tsv":
-                data = dataframe.to_csv(sep="\t", index=False, header=header)
+            if filetype in ["tsv", "dsv"]:
+                params = {
+                    "sep": "\t" if filetype == "tsv" else sep,
+                    "index": False,
+                    "header": header,
+                }
+                data = dataframe.to_csv(**params)
             elif filetype == "jsonlines":
                 data = dataframe.to_json(orient="records", lines=True)
             else:
@@ -213,3 +222,16 @@ class DataIO:
                     pipeline,
                 )
             )
+
+
+def warn_tsv_deprecation(filetype):
+    """
+    Warning for tsv future deprecation
+    """
+    if filetype == "tsv":
+        warnings.warn(
+            'Filetype "tsv" will be deprecated in future versions. '
+            'Please use the new "dsv" (delimiter-separated values) '
+            "type with 'sep=\\t'",
+            DeprecationWarning,
+        )
