@@ -43,9 +43,9 @@ df_read = dio.read(path="my-file.parquet", filetype="parquet")
 dio.write(dataframe=df, path="my-file.json.gz", filetype="jsonlines", gzip=True)
 df_read = dio.read(path="my-file.json.gz", filetype="jsonlines", gzip=True)
 
-# write as tab-separated-values in multiple partitions
-dio.write(dataframe=df, path="my-file.tsv", filetype="tsv", partition_by=["col1"])
-df_read = dio.read(path="my-file.json.gz", filetype="tsv")
+# write as delimiter-separated-values in multiple partitions
+dio.write(dataframe=df, path="my-file.tsv", filetype="dsv", sep="\t", partition_by=["col1"])
+df_read = dio.read(path="my-file.tsv", filetype="dsv", sep="\t")
 ```
 ---
 `datatoolz.logging.JsonLogger` is a wrapper logger for outputting JSON-structured logs
