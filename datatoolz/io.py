@@ -116,7 +116,12 @@ class DataIO:
 
             if filetype in ["dsv", "tsv"]:
                 reader = pd.read_csv
-                params = {"dtype": str, "keep_default_na": False, "escapechar": "\\"}
+                params = {
+                    "dtype": str,
+                    "keep_default_na": False,
+                    "sep": "\t",
+                    "escapechar": "\\",
+                }
                 params.update(pandas_kwargs)
             elif filetype == "jsonlines":
                 reader = pd.read_json
@@ -167,7 +172,7 @@ class DataIO:
 
         def _serialize(data):
             if filetype in ["tsv", "dsv"]:
-                params = {"index": False}
+                params = {"index": False, "sep": "\t"}
                 params.update(pandas_kwargs)
                 data = data.to_csv(**params)
             elif filetype == "jsonlines":
