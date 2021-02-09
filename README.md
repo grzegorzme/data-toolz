@@ -1,6 +1,12 @@
 data-toolz
 ==========
-This repository contains reusable python code for data projects
+This repository contains reusable python code for data projects.
+
+The motivation for this project was to create a package which allows to abstract dataset read/write operations from 
+* destination type (`local`, `s3`, `<tbd...>`) and 
+* target file type (`delimiter-separated values`, `jsonlines`, `parquet`)
+
+This would allow to write code easily transferable between local and cloud applications.
 
 
 installation
@@ -25,7 +31,7 @@ for fs_type in ("local", "s3"):
         fo.write("Hello World!")
 ```
 ---
-`datatoolz.io.DataIO` class gives you a versatile Reader/Writer interface for handling of typical data files (`jsonlines`, `tsv`, `parquet`)
+`datatoolz.io.DataIO` class gives you a versatile Reader/Writer interface for handling of typical data files (`jsonlines`, `dsv`, `parquet`)
 
 ```python
 import pandas as pd
