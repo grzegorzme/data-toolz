@@ -1,6 +1,12 @@
 data-toolz
 ==========
-This repository contains reusable python code for data projects
+This repository contains reusable python code for data projects.
+
+The motivation for this project was to create a package which allows to abstract dataset read/write operations from 
+* destination type (`local`, `s3`, `<tbd...>`) and 
+* target file type (`delimiter-separated values`, `jsonlines`, `parquet`)
+
+This would allow to write code easily transferable between local and cloud applications.
 
 
 installation
@@ -25,7 +31,7 @@ for fs_type in ("local", "s3"):
         fo.write("Hello World!")
 ```
 ---
-`datatoolz.io.DataIO` class gives you a versatile Reader/Writer interface for handling of typical data files (`jsonlines`, `tsv`, `parquet`)
+`datatoolz.io.DataIO` class gives you a versatile Reader/Writer interface for handling of typical data files (`jsonlines`, `dsv`, `parquet`)
 
 ```python
 import pandas as pd
@@ -37,15 +43,19 @@ dio = DataIO()  # defaults to "local" FileSystem
 
 # write as parquet
 dio.write(dataframe=df, path="my-file.parquet", filetype="parquet")
-df_read = dio.read(path="my-file.parquet", filetype="parquet")
+dio.read(path="my-file.parquet", filetype="parquet")
 
 # write as gzip-compressed jsonlines
 dio.write(dataframe=df, path="my-file.json.gz", filetype="jsonlines", gzip=True)
-df_read = dio.read(path="my-file.json.gz", filetype="jsonlines", gzip=True)
+dio.read(path="my-file.json.gz", filetype="jsonlines", gzip=True)
 
 # write as delimiter-separated-values in multiple partitions
 dio.write(dataframe=df, path="my-file.tsv", filetype="dsv", sep="\t", partition_by=["col1"])
-df_read = dio.read(path="my-file.tsv", filetype="dsv", sep="\t")
+dio.read(path="my-file.tsv", filetype="dsv", sep="\t")
+
+# write output in multiple chunks per partition
+dio.write(dataframe=df, path="my-prefix", filetype="dsv", sep="\t", partition_by=["col1"], suffix=["chunk01.tsv", "chunk02.tsv"])
+dio.read(path="my-prefix", filetype="dsv", sep="\t")
 ```
 ---
 `datatoolz.logging.JsonLogger` is a wrapper logger for outputting JSON-structured logs
