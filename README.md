@@ -37,15 +37,19 @@ dio = DataIO()  # defaults to "local" FileSystem
 
 # write as parquet
 dio.write(dataframe=df, path="my-file.parquet", filetype="parquet")
-df_read = dio.read(path="my-file.parquet", filetype="parquet")
+dio.read(path="my-file.parquet", filetype="parquet")
 
 # write as gzip-compressed jsonlines
 dio.write(dataframe=df, path="my-file.json.gz", filetype="jsonlines", gzip=True)
-df_read = dio.read(path="my-file.json.gz", filetype="jsonlines", gzip=True)
+dio.read(path="my-file.json.gz", filetype="jsonlines", gzip=True)
 
 # write as delimiter-separated-values in multiple partitions
 dio.write(dataframe=df, path="my-file.tsv", filetype="dsv", sep="\t", partition_by=["col1"])
-df_read = dio.read(path="my-file.tsv", filetype="dsv", sep="\t")
+dio.read(path="my-file.tsv", filetype="dsv", sep="\t")
+
+# write output in multiple chunks per partition
+dio.write(dataframe=df, path="my-prefix", filetype="dsv", sep="\t", partition_by=["col1"], suffix=["chunk01.tsv", "chunk02.tsv"])
+dio.read(path="my-prefix", filetype="dsv", sep="\t")
 ```
 ---
 `datatoolz.logging.JsonLogger` is a wrapper logger for outputting JSON-structured logs
