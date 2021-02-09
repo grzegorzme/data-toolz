@@ -188,7 +188,7 @@ class TestDataIO(unittest.TestCase):
                 filetype=params["filetype"],
                 gzip=params.get("gzip"),
                 sep=params.get("sep"),
-                header=params.get("header"),
+                header=0 if params.get("header") else None,
             )
 
             assert self.sample_df.shape == df.shape
@@ -307,6 +307,21 @@ class TestDataIO(unittest.TestCase):
                 values=[1, None],
                 suffix="suffix",
             )
+
+    def test_write_with_chunking(self):
+        from datatoolz.io import DataIO
+
+        filesystem = FileSystem()
+        dio = DataIO(filesystem=filesystem)
+
+        path = os.path.join(self.test_dir, "multi-suffix", "my-file")
+        suffix = [f"part{i}.txt" for i in range(2)]
+        dio.write(dataframe=self.sample_df, path=path, suffix=suffix)
+        files = filesystem.find(path=path)
+        assert len(files) == len(suffix)
+
+        df = dio.read(path=path)
+        assert self.sample_df.shape == df.shape
 
     def test_tsv_deprecation(self):
         from datatoolz.io import DataIO

@@ -56,7 +56,7 @@ class DataIO:
             prefix,
             *(f"{field}={value}" for field, value in zip(partitions, values)),
             f"{time.time_ns()}-{uuid4()}" if suffix is None else suffix,
-        )
+        ).rstrip("/")
 
     def get_partitions(
         self, dataframe, partition_by=None, prefix="", suffix="", drop=False
@@ -70,45 +70,54 @@ class DataIO:
         :param drop: bool, should the partition fields be dropped from the output
         :return: generator of (partition_name: str, partition_data: pandas.DataFrame)
         """
+        if suffix is None or isinstance(suffix, str):
+            suffix = [suffix]
+        suffix = list(suffix)
+
         if partition_by is None:
-            yield prefix, dataframe
+            chunk_number = len(suffix)
+            chunk_size = -(-dataframe.shape[0] // chunk_number)
+            for i, suf in enumerate(suffix):
+                chunk = dataframe.iloc[chunk_size * i : chunk_size * (i + 1)]
+                chunk_path = self.partition_transformer(prefix=prefix, suffix=suf)
+                yield chunk_path, chunk
         else:
             for group, partition in dataframe.groupby(partition_by):
-                if isinstance(group, str):
-                    group = (group,)
-                partition_path = self.partition_transformer(
-                    prefix=prefix, partitions=partition_by, values=group, suffix=suffix
-                )
                 if drop:
                     partition = partition.drop(partition_by, axis=1)
-                yield partition_path, partition
 
-    def read(self, path, filetype="parquet", gzip=False, sep="\t", header=None):
+                if isinstance(group, str):
+                    group = (group,)
+
+                chunk_number = len(suffix)
+                chunk_size = -(-partition.shape[0] // chunk_number)
+                for i, suf in enumerate(suffix):
+                    chunk = partition.iloc[chunk_size * i : chunk_size * (i + 1)]
+                    chunk_path = self.partition_transformer(
+                        prefix=prefix, partitions=partition_by, values=group, suffix=suf
+                    )
+                    yield chunk_path, chunk
+
+    def read(self, path, filetype="parquet", gzip=False, **pandas_kwargs):
         """
         Function for reading (partitioned) data sets from a given path
         :param path: path-like
         :param filetype: input format type: parquet|dsv|jsonlines
         :param gzip: is the input compressed, only used for dsv|jsonlines
-        :param sep: separator used for dsv (delimiter-separated values) files
-        :param header: bool - True if input files has headers
+        :param pandas_kwargs: optional kwargs passed to pandas reader
         :return: pandas.DataFrame
         """
 
         warn_tsv_deprecation(filetype=filetype)
 
-        def _deserialize(data, filetype, gzip, header):
+        def _deserialize(data):
             if gzip:
                 data = decompress(data)
 
             if filetype in ["dsv", "tsv"]:
                 reader = pd.read_csv
-                params = {
-                    "sep": sep,
-                    "header": 0 if header is True else None,
-                    "dtype": str,
-                    "keep_default_na": False,
-                }
-
+                params = {"dtype": str, "keep_default_na": False, "escapechar": "\\"}
+                params.update(pandas_kwargs)
             elif filetype == "jsonlines":
                 reader = pd.read_json
                 params = {"orient": "records", "lines": True, "dtype": False}
@@ -116,35 +125,20 @@ class DataIO:
                 raise ValueError(f"Unsupported output format: {filetype}")
             return reader(io.StringIO(data.decode(encoding="utf-8")), **params)
 
-        def _read(path, filetype, gzip, header):
+        def _read(key):
             if filetype == "parquet":
-                data = pd.read_parquet(path=path, filesystem=self.filesystem)
+                data = pd.read_parquet(path=key, filesystem=self.filesystem)
             else:
-                with self.filesystem.open(path, mode="rb") as file_object:
-                    data = _deserialize(
-                        data=file_object.read(),
-                        filetype=filetype,
-                        gzip=gzip,
-                        header=header,
-                    )
+                with self.filesystem.open(key, mode="rb") as file_object:
+                    data = _deserialize(data=file_object.read())
             return data
 
         with ThreadPoolExecutor() as pool:
-            data = list(
-                pool.map(
-                    lambda x: _read(
-                        path=x,
-                        filetype=filetype,
-                        gzip=gzip,
-                        header=header,
-                    ),
-                    self.filesystem.find(path=path),
-                )
+            dfs = list(
+                pool.map(lambda x: _read(key=x), self.filesystem.find(path=path))
             )
 
-        return (
-            pd.concat(data).reset_index(drop=True) if len(data) > 0 else pd.DataFrame()
-        )
+        return pd.concat(dfs).reset_index(drop=True) if len(dfs) > 0 else pd.DataFrame()
 
     def write(
         self,
@@ -152,11 +146,10 @@ class DataIO:
         path,
         filetype="parquet",
         gzip=False,
-        sep="\t",
-        header=False,
         partition_by=None,
         suffix=None,
         drop_partitions=False,
+        **pandas_kwargs,
     ):
         """
         Saves data in a given format
@@ -164,25 +157,21 @@ class DataIO:
         :param path: path-like
         :param filetype: output format: parquet|dsv|jsonlines
         :param gzip: should the output be gzipped: dsv|jsonlines
-        :param sep: separator used for dsv (delimiter-separated values) files
-        :param header: should the columns names be included: dsv-only
         :param partition_by: optional, list of columns to partition the output
         :param suffix: optional, suffix to use for output partitions
         :param drop_partitions: optional, bool - if to drop partition fields from output
+        :param pandas_kwargs: optional kwargs passed to pandas writer
         """
 
         warn_tsv_deprecation(filetype=filetype)
 
-        def _serialize(dataframe, filetype, gzip, header):
+        def _serialize(data):
             if filetype in ["tsv", "dsv"]:
-                params = {
-                    "sep": "\t" if filetype == "tsv" else sep,
-                    "index": False,
-                    "header": header,
-                }
-                data = dataframe.to_csv(**params)
+                params = {"index": False}
+                params.update(pandas_kwargs)
+                data = data.to_csv(**params)
             elif filetype == "jsonlines":
-                data = dataframe.to_json(orient="records", lines=True)
+                data = data.to_json(orient="records", lines=True)
             else:
                 raise ValueError(f"Unsupported output format: {filetype}")
             data = data.encode("utf-8")
@@ -190,15 +179,13 @@ class DataIO:
                 data = compress(data)
             return data
 
-        def _write(path, dataframe, filetype, gzip, header):
-            self.filesystem.makedirs(os.path.dirname(path), exist_ok=True)
+        def _write(key, data):
+            self.filesystem.makedirs(os.path.dirname(key), exist_ok=True)
             if filetype == "parquet":
-                dataframe.to_parquet(path=path, filesystem=self.filesystem)
+                data.to_parquet(path=key, filesystem=self.filesystem)
             else:
-                data = _serialize(
-                    dataframe=dataframe, filetype=filetype, gzip=gzip, header=header
-                )
-                with self.filesystem.open(path, mode="wb") as file_object:
+                data = _serialize(data=data)
+                with self.filesystem.open(key, mode="wb") as file_object:
                     file_object.write(data)
 
         pipeline = self.get_partitions(
@@ -210,18 +197,7 @@ class DataIO:
         )
 
         with ThreadPoolExecutor() as pool:
-            list(
-                pool.map(
-                    lambda x: _write(
-                        path=x[0],
-                        dataframe=x[1],
-                        filetype=filetype,
-                        gzip=gzip,
-                        header=header,
-                    ),
-                    pipeline,
-                )
-            )
+            list(pool.map(lambda x: _write(key=x[0], data=x[1]), pipeline))
 
 
 def warn_tsv_deprecation(filetype):
