@@ -68,17 +68,19 @@ logger.info(msg="what is my purpose?", meaning_of_life=42)
 ```
 {"logger": {"application": "my-custom-logger", "environment": "dev"}, "level": "info", "timestamp": "2020-11-03 18:31:07.757534", "message": "what is my purpose?", "extra": {"meaning_of_life": 42}}
 ```
-`datatoolz.logging.json_logger` is a decorator logger for outputting JSON-structured logs from a function
+It can also be used to decorate functions and log their execution details
 ```python
-from datatoolz.logging import json_logger
+from datatoolz.logging import JsonLogger
 
-@json_logger(msg="my-custom-log", duration=True, memory=True, my_value="my-value", output_length=lambda x: len(x))
+logger = JsonLogger(name="my-custom-logger", env="dev")
+
+@logger.decorate(msg="my-custom-log", duration=True, memory=True, my_value="my-value", output_length=lambda x: len(x))
 def my_func(x, y):
     return x + y, x * y
 
 print(my_func(42, 2))
 ```
 ```
-{"logger": {"application": null, "environment": null}, "level": "info", "timestamp": "2021-03-24 18:10:47.054703", "message": "my-custom-log", "extra": {"function": "my_func", "memory": {"current": 432, "peak": 432}, "duration": 2.5980000000203063e-06, "my_value": "my-value", "output_length": 2}}
+{"logger": {"application": "my-custom-logger", "environment": "dev"}, "level": "info", "timestamp": "2021-03-24 18:10:47.054703", "message": "my-custom-log", "extra": {"function": "my_func", "memory": {"current": 432, "peak": 432}, "duration": 2.5980000000203063e-06, "my_value": "my-value", "output_length": 2}}
 (44, 84)
 ```
