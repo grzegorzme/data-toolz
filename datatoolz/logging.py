@@ -4,6 +4,8 @@ import sys
 import datetime
 import json
 import logging
+import time
+import tracemalloc
 
 INFO = "info"
 DEBUG = "debug"
@@ -61,3 +63,50 @@ class JsonLogger:
         :param kwargs: any optional data to be added to the log structure
         """
         self.logger.error(msg=self._log(msg=msg, level=ERROR, extra=kwargs))
+
+
+def json_logger(
+    msg, logger: JsonLogger = None, duration: bool = True, memory: bool = True, **custom
+):
+    """
+    A JsonLogger decorator for logging various execution metrics of a function
+    :param msg: static log message
+    :param logger: optional logger object to produce logs
+    :param duration: log execution duration
+    :param memory: log memory consumption
+    :param custom: pass any custom value to log, this can be either a static value or a
+      callable to execute on the function result
+    """
+    if logger is None:
+        logger = JsonLogger()
+
+    def inner_decorator(func):
+        def wrapper(*args, **kwargs):
+
+            log = {"function": func.__name__}
+
+            if memory:
+                tracemalloc.start()
+            start = time.perf_counter()
+            result = func(*args, **kwargs)
+            end = time.perf_counter()
+
+            if memory:
+                log["memory"] = dict(
+                    zip(("current", "peak"), tracemalloc.get_traced_memory())
+                )
+
+            if duration:
+                log["duration"] = end - start
+
+            for name, call_or_value in custom.items():
+                if callable(call_or_value):
+                    log[name] = call_or_value(result)
+                else:
+                    log[name] = call_or_value
+            logger.info(msg=msg, **log)
+            return result
+
+        return wrapper
+
+    return inner_decorator
