@@ -48,65 +48,59 @@ class JsonLogger:
             j["extra"] = extra
         return json.dumps(j)
 
-    def info(self, msg: str, **kwargs) -> None:
+    def info(self, msg: str, **custom) -> None:
         """
         Log message with INFO level
         :param msg: main log message
-        :param kwargs: any optional data to be added to the log structure
+        :param custom: any optional data to be added to the log structure
         """
-        self.logger.info(msg=self._log(msg=msg, level=INFO, extra=kwargs))
+        self.logger.info(msg=self._log(msg=msg, level=INFO, extra=custom))
 
-    def error(self, msg, **kwargs) -> None:
+    def error(self, msg, **custom) -> None:
         """
         Log message with ERROR level
         :param msg: main log message
-        :param kwargs: any optional data to be added to the log structure
+        :param custom: any optional data to be added to the log structure
         """
-        self.logger.error(msg=self._log(msg=msg, level=ERROR, extra=kwargs))
+        self.logger.error(msg=self._log(msg=msg, level=ERROR, extra=custom))
 
+    def decorate(self, msg: str, duration: bool = True, memory: bool = True, **custom):
+        """
+        A JsonLogger decorator for logging various execution metrics of a function
+        :param msg: static log message
+        :param duration: log execution duration
+        :param memory: log memory consumption
+        :param custom: pass any custom value to log, this can be either a static value
+          or a callable executed on the function result
+        """
 
-def json_logger(
-    msg, logger: JsonLogger = None, duration: bool = True, memory: bool = True, **custom
-):
-    """
-    A JsonLogger decorator for logging various execution metrics of a function
-    :param msg: static log message
-    :param logger: optional logger object to produce logs
-    :param duration: log execution duration
-    :param memory: log memory consumption
-    :param custom: pass any custom value to log, this can be either a static value or a
-      callable to execute on the function result
-    """
-    if logger is None:
-        logger = JsonLogger()
+        def inner_decorator(func):
+            def wrapper(*args, **kwargs):
 
-    def inner_decorator(func):
-        def wrapper(*args, **kwargs):
+                log = {"function": func.__name__}
 
-            log = {"function": func.__name__}
+                if memory:
+                    tracemalloc.start()
+                start = time.perf_counter()
+                result = func(*args, **kwargs)
+                end = time.perf_counter()
 
-            if memory:
-                tracemalloc.start()
-            start = time.perf_counter()
-            result = func(*args, **kwargs)
-            end = time.perf_counter()
+                if memory:
+                    log["memory"] = dict(
+                        zip(("current", "peak"), tracemalloc.get_traced_memory())
+                    )
 
-            if memory:
-                log["memory"] = dict(
-                    zip(("current", "peak"), tracemalloc.get_traced_memory())
-                )
+                if duration:
+                    log["duration"] = end - start
 
-            if duration:
-                log["duration"] = end - start
+                for name, call_or_value in custom.items():
+                    if callable(call_or_value):
+                        log[name] = call_or_value(result)
+                    else:
+                        log[name] = call_or_value
+                self.info(msg=msg, **log)
+                return result
 
-            for name, call_or_value in custom.items():
-                if callable(call_or_value):
-                    log[name] = call_or_value(result)
-                else:
-                    log[name] = call_or_value
-            logger.info(msg=msg, **log)
-            return result
+            return wrapper
 
-        return wrapper
-
-    return inner_decorator
+        return inner_decorator

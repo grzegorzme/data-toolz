@@ -50,18 +50,22 @@ class TestLogging(object):
     def test_logger_decorator(self, capsys):
         import datatoolz.logging as logging
 
-        @logging.json_logger(
-            msg="my-message", static_value="my-value", length=lambda x: len(x)
+        logger = logging.JsonLogger(name="json-logger", env="test")
+
+        @logger.decorate(
+            msg="adding and multiplying",
+            static_value="my-value",
+            length=lambda x: len(x),
         )
         def my_func(a, b):
             return a + b, a * b
 
-        my_func(1, 2)
+        my_func(42, 2)
 
         log, _ = capsys.readouterr()
         log = json.loads(log)
 
-        assert log["message"] == "my-message"
+        assert log["message"] == "adding and multiplying"
         assert log["level"] == "info"
         assert log["extra"]["function"] == "my_func"
         assert log["extra"]["duration"] >= 0
