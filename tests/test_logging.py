@@ -46,3 +46,25 @@ class TestLogging(object):
         for k, v in params["logger-call"].items():
             if k != "msg":
                 assert log["extra"][k] == v
+
+    def test_logger_decorator(self, capsys):
+        import datatoolz.logging as logging
+
+        @logging.json_logger(
+            msg="my-message", static_value="my-value", length=lambda x: len(x)
+        )
+        def my_func(a, b):
+            return a + b, a * b
+
+        my_func(1, 2)
+
+        log, _ = capsys.readouterr()
+        log = json.loads(log)
+
+        assert log["message"] == "my-message"
+        assert log["level"] == "info"
+        assert log["extra"]["function"] == "my_func"
+        assert log["extra"]["duration"] >= 0
+        assert log["extra"]["memory"]["peak"] >= 0
+        assert log["extra"]["static_value"] == "my-value"
+        assert log["extra"]["length"] == 2
