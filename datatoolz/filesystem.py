@@ -1,7 +1,6 @@
 """Module providing a FileSystem wrapper class"""
 
 import inspect
-from uuid import uuid4
 
 import botocore.session
 import botocore.credentials
@@ -18,6 +17,8 @@ class FileSystem(AbstractFileSystem):
         self.name = name
         self.assume_client = None
         self.assume_role = assumed_role
+        if isinstance(self.assume_role, str):
+            self.assume_role = [self.assume_role]
         self.endpoint_url = endpoint_url
 
         if self.name == "local":
@@ -25,7 +26,6 @@ class FileSystem(AbstractFileSystem):
         elif self.name == "s3":
             session = botocore.session.get_session()
             if self.assume_role:
-                self.assume_client = session.create_client("sts")
                 session_credentials = (
                     botocore.credentials.RefreshableCredentials.create_from_metadata(
                         metadata=self._sts_refresh(),
@@ -58,16 +58,38 @@ class FileSystem(AbstractFileSystem):
 
     def _sts_refresh(self):
         """Refresh tokens by calling assume_role again"""
-        response = self.assume_client.assume_role(
-            RoleArn=self.assume_role,
-            RoleSessionName=f"data-toolz-filesystem-s3-{uuid4()}",
-            DurationSeconds=3600,
-        ).get("Credentials")
+
+        session = botocore.session.get_session()
+        credentials = dict()
+        kwargs = dict()
+
+        for role in self.assume_role:
+            if credentials:
+                kwargs = {
+                    "aws_access_key_id": credentials["AccessKeyId"],
+                    "aws_secret_access_key": credentials["SecretAccessKey"],
+                    "aws_session_token": credentials["SessionToken"],
+                }
+            assume_client = session.create_client("sts", **kwargs)
+
+            credentials = assume_client.assume_role(
+                RoleArn=role,
+                RoleSessionName=f"data-toolz-filesystem-s3-{role}",
+                DurationSeconds=3600,
+            ).get("Credentials")
+
+            setattr(session, "_credentials", botocore.credentials.Credentials(
+                access_key=credentials["AccessKeyId"],
+                secret_key=credentials["SecretAccessKey"],
+                token=credentials["SessionToken"],
+            ))
+
+        del session
         return {
-            "access_key": response.get("AccessKeyId"),
-            "secret_key": response.get("SecretAccessKey"),
-            "token": response.get("SessionToken"),
-            "expiry_time": response.get("Expiration").isoformat(),
+            "access_key": credentials.get("AccessKeyId"),
+            "secret_key": credentials.get("SecretAccessKey"),
+            "token": credentials.get("SessionToken"),
+            "expiry_time": credentials.get("Expiration").isoformat(),
         }
 
     def _rm(self, path):

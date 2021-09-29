@@ -38,14 +38,25 @@ class TestFileSystem(unittest.TestCase):
     def test_s3_with_assume(self):
         from datatoolz.filesystem import FileSystem
 
-        fs = FileSystem(name="s3", assumed_role="arn:some:random:long:enough:string")
+        assume_chains = [
+            "arn:some:random:long:enough:string",
+            ["arn:some:random:long:enough:string"],
+            [
+                "arn:some:random:long:enough:string",
+                "arn:other:random:long:enough:string",
+            ],
+        ]
 
-        file_name = os.path.join(self.bucket_name, "with-assume", "test.txt")
-        with fs.open(file_name, mode="wt") as fo:
-            fo.write("test")
+        for roles in assume_chains:
 
-        result = list(fs.find(path=os.path.join(self.bucket_name, "with-assume")))
-        assert [file_name] == result
+            fs = FileSystem(name="s3", assumed_role=roles)
+
+            file_name = os.path.join(self.bucket_name, "with-assume", "test.txt")
+            with fs.open(file_name, mode="wt") as fo:
+                fo.write("test")
+
+            result = list(fs.find(path=os.path.join(self.bucket_name, "with-assume")))
+            assert [file_name] == result
 
     def test_filesystem_basics(self):
         from datatoolz.filesystem import FileSystem
