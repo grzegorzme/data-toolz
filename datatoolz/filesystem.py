@@ -74,15 +74,19 @@ class FileSystem(AbstractFileSystem):
 
             credentials = assume_client.assume_role(
                 RoleArn=role,
-                RoleSessionName=f"data-toolz-filesystem-s3-{role}",
+                RoleSessionName="data-toolz-filesystem-s3",
                 DurationSeconds=3600,
             ).get("Credentials")
 
-            setattr(session, "_credentials", botocore.credentials.Credentials(
-                access_key=credentials["AccessKeyId"],
-                secret_key=credentials["SecretAccessKey"],
-                token=credentials["SessionToken"],
-            ))
+            setattr(
+                session,
+                "_credentials",
+                botocore.credentials.Credentials(
+                    access_key=credentials["AccessKeyId"],
+                    secret_key=credentials["SecretAccessKey"],
+                    token=credentials["SessionToken"],
+                ),
+            )
 
         del session
         return {
