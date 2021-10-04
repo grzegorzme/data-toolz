@@ -13,6 +13,14 @@ class FileSystem(AbstractFileSystem):
     """Wrapper for easier initialization of various file-system classes"""
 
     def __init__(self, name="local", assumed_role=None, endpoint_url=None):
+        """
+        FileSystem initializer
+        :param name: str, filesystem type, supported values [local|s3]
+        :param assumed_role: optional str|list,
+            permission assume chain - relevant for [s3]
+        :param endpoint_url: optional str, override storage service url
+        """
+
         super().__init__()
         self.name = name
         self.assume_client = None
