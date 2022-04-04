@@ -86,7 +86,7 @@ class DataIO:
                 if drop:
                     partition = partition.drop(partition_by, axis=1)
 
-                if isinstance(group, str):
+                if not isinstance(group, tuple):
                     group = (group,)
 
                 chunk_number = len(suffix)
