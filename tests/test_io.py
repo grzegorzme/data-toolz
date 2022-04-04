@@ -344,3 +344,14 @@ class TestDataIO(unittest.TestCase):
             )
 
         assert self.sample_df.shape == df.shape
+
+    def test_partition_value_number(self):
+        from datatoolz.io import DataIO
+
+        data = pd.DataFrame({"col1": [1, 2, 3], "col2": ["a", "b", "c"]})
+        dio = DataIO()
+
+        path = os.path.join(self.test_dir, "my-parquet-file")
+        dio.write(data, path=path, partition_by=["col1"])
+
+        assert data.shape == dio.read(path).shape
