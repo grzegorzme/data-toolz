@@ -4,7 +4,6 @@ import pytest
 
 
 class TestLogging(object):
-
     logger_name = "test-logger"
     logger_env = "test-env"
 

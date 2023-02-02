@@ -162,7 +162,6 @@ class TestDataIO(unittest.TestCase):
         from datatoolz.io import DataIO
 
         for i, params in enumerate(self.params):
-
             filesystem = FileSystem(params["filesystem"])
 
             dio = DataIO(filesystem=filesystem)
@@ -242,7 +241,6 @@ class TestDataIO(unittest.TestCase):
         ]
 
     def test_write_custom_partition_formatting(self):
-
         from datatoolz.io import DataIO
 
         filesystem = FileSystem()

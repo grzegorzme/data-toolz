@@ -44,8 +44,8 @@ class DataIO:
         :return: path-like
         e.g. ("prefix", ["a", "b"], [1, 2], "suffix") -> "prefix/a=1/b=2/suffix"
         """
-        partitions = partitions or list()
-        values = values or list()
+        partitions = partitions or []
+        values = values or []
         if len(partitions) != len(values) or any(v is None for v in values):
             raise ValueError(
                 "`partitions` and `values` lengths must match "
@@ -82,7 +82,8 @@ class DataIO:
                 chunk_path = self.partition_transformer(prefix=prefix, suffix=suf)
                 yield chunk_path, chunk
         else:
-            for group, partition in dataframe.groupby(partition_by):
+            grouper = partition_by[0] if len(partition_by) == 1 else partition_by
+            for group, partition in dataframe.groupby(grouper):
                 if drop:
                     partition = partition.drop(partition_by, axis=1)
 
