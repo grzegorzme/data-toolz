@@ -76,7 +76,6 @@ class JsonLogger:
 
         def inner_decorator(func):
             def wrapper(*args, **kwargs):
-
                 log = {"function": func.__name__}
 
                 if memory:

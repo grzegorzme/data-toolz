@@ -48,7 +48,6 @@ class TestFileSystem(unittest.TestCase):
         ]
 
         for roles in assume_chains:
-
             fs = FileSystem(name="s3", assumed_role=roles)
 
             file_name = os.path.join(self.bucket_name, "with-assume", "test.txt")

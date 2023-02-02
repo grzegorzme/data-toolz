@@ -7,6 +7,7 @@ import botocore.credentials
 import s3fs
 from fsspec import AbstractFileSystem
 from fsspec.implementations.local import LocalFileSystem
+from .utils import _getmembers
 
 
 class FileSystem(AbstractFileSystem):
@@ -50,7 +51,7 @@ class FileSystem(AbstractFileSystem):
         else:
             raise ValueError(f"Unsupported FileReader type: {type}")
 
-        for method_name, method in inspect.getmembers(
+        for method_name, method in _getmembers(
             self.filesystem, predicate=inspect.ismethod
         ):
             if method_name not in (
@@ -61,6 +62,7 @@ class FileSystem(AbstractFileSystem):
                 "ls",
                 "modified",
                 "sign",
+                "fsid",
             ):
                 setattr(self, method_name, method)
 
@@ -68,8 +70,8 @@ class FileSystem(AbstractFileSystem):
         """Refresh tokens by calling assume_role again"""
 
         session = botocore.session.get_session()
-        credentials = dict()
-        kwargs = dict()
+        credentials = {}
+        kwargs = {}
 
         for role in self.assume_role:
             if credentials:
@@ -121,3 +123,7 @@ class FileSystem(AbstractFileSystem):
 
     def sign(self, path, expiration=100, **kwargs):
         return self.filesystem.sign(path=path, expiration=expiration, **kwargs)
+
+    @property
+    def fsid(self):
+        return self.filesystem.fsid()
