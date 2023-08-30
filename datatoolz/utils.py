@@ -54,3 +54,9 @@ def _getmembers(object, predicate=None):
         processed.add(key)
     results.sort(key=lambda pair: pair[0])
     return results
+
+
+def pairwise(iterable):
+    "s -> (s0, s1), (s2, s3), (s4, s5), ..."
+    iterator = iter(iterable)
+    return zip(iterator, iterator)
