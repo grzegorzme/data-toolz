@@ -7,7 +7,7 @@ requirements = ["s3fs==0.4.2", "pandas", "pyarrow"]
 
 setuptools.setup(
     name="data-toolz",
-    version="0.1.10",
+    version="0.1.11",
     author="Grzegorz Melniczak",
     author_email="mogadish@gmail.com",
     description="Data helper package",
