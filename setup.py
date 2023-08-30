@@ -16,6 +16,6 @@ setuptools.setup(
     url="https://github.com/grzegorzme/data-toolz",
     packages=setuptools.find_packages(exclude=["tests"]),
     classifiers=["Programming Language :: Python :: 3"],
-    python_requires=">=3.7",
+    python_requires=">=3.10",
     install_requires=requirements,
 )
